@@ -35,7 +35,7 @@ set vb t_vb= "ビープ音無効化
 
 " 不可視文字の表示
 set list
-set listchars=tab:»-,trail:-,eol:¬,extends:»,precedes:«,nbsp:%
+set listchars=tab:»-,trail:-,extends:»,precedes:«,nbsp:%
 
 " キーワード補完を常時起動
 set completeopt=menuone
@@ -50,3 +50,7 @@ if has('persistent_undo')
   set undolevels=1000
   set undoreload=10000
 endif
+
+" _/_/_/_/ Finalization _/_/_/_/
+filetype plugin indent on " ファイルタイプ関連を再度有効化
+
