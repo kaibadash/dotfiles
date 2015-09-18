@@ -30,7 +30,7 @@ set backspace=indent,eol,start " バックスペース有効化
 set ambiwidth=double " 曖昧幅の文字幅をダブルにする
 set nofoldenable " 折りたたみ無効化
 set clipboard=unnamed " ヤンク時にクリップボードにコピー
-set mouse=a " マウス有効化
+" set mouse=a " マウス有効化
 set vb t_vb= "ビープ音無効化
 
 " 不可視文字の表示
