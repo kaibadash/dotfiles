@@ -73,5 +73,9 @@ autocmd FileType coffee     setlocal sw=2 sts=2 ts=2 et
 " _/_/_/_/ Finalization _/_/_/_/
 filetype plugin indent on " ファイルタイプ関連を再度有効化
 
-" 行末のスペースを保存時に取り除く
+" 行末のスペースを保存じに取り除く
 autocmd BufWritePre * :%s/\s\+$//ge
+highlight ColorColumn ctermbg=235
+
+execute "set colorcolumn=" . join(range(81,100), ',')
+
