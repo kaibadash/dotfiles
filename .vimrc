@@ -77,5 +77,7 @@ filetype plugin indent on " ファイルタイプ関連を再度有効化
 autocmd BufWritePre * :%s/\s\+$//ge
 highlight ColorColumn ctermbg=235
 
-execute "set colorcolumn=" . join(range(81,100), ',')
+execute "set colorcolumn=" . join(range(99,100), ',')
 
+" add jbuilder syntax highlighting
+au BufNewFile,BufRead *.json.jbuilder set ft=ruby
