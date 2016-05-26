@@ -4,7 +4,7 @@ filetype off " 一時的にファイルタイプ関連を無効化
 " _/_/_/_/ Common settings _/_/_/_/
 syntax enable
 set background=dark
-colorscheme elflord
+colorscheme default
 
 set encoding=utf-8
 set fileencodings=utf-8,sjis,euc
@@ -30,12 +30,12 @@ set backspace=indent,eol,start " バックスペース有効化
 set ambiwidth=double " 曖昧幅の文字幅をダブルにする
 set nofoldenable " 折りたたみ無効化
 set clipboard=unnamed " ヤンク時にクリップボードにコピー
-set mouse=a " マウス有効化
+" set mouse=a " マウス有効化
 set vb t_vb= "ビープ音無効化
 
 " 不可視文字の表示
 set list
-set listchars=tab:»-,trail:-,eol:¬,extends:»,precedes:«,nbsp:%
+set listchars=tab:»-,trail:-,extends:»,precedes:«,nbsp:%
 
 " キーワード補完を常時起動
 set completeopt=menuone
@@ -50,3 +50,34 @@ if has('persistent_undo')
   set undolevels=1000
   set undoreload=10000
 endif
+
+" bundle
+" _/_/_/_/ Neo Bundle _/_/_/_/
+if has('vim_starting')
+  set runtimepath+=~/.vim/bundle/neobundle.vim/
+endif
+
+call neobundle#begin(expand('~/.vim/bundle/'))
+NeoBundleFetch 'Shougo/neobundle.vim'
+
+" curl https://raw.githubusercontent.com/Shougo/neobundle.vim/master/bin/install.sh > install.sh
+" sh ./install.sh
+NeoBundle 'kchmck/vim-coffee-script'
+NeoBundle 'groenewege/vim-less'
+call neobundle#end()
+
+" vimにcoffeeファイルタイプを認識させる
+au BufRead,BufNewFile,BufReadPre *.coffee   set filetype=coffee
+autocmd FileType coffee     setlocal sw=2 sts=2 ts=2 et
+
+" _/_/_/_/ Finalization _/_/_/_/
+filetype plugin indent on " ファイルタイプ関連を再度有効化
+
+" 行末のスペースを保存じに取り除く
+autocmd BufWritePre * :%s/\s\+$//ge
+highlight ColorColumn ctermbg=235
+
+execute "set colorcolumn=" . join(range(99,100), ',')
+
+" add jbuilder syntax highlighting
+au BufNewFile,BufRead *.json.jbuilder set ft=ruby
