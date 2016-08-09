@@ -1,5 +1,5 @@
 # Path to your oh-my-zsh installation.
-export ZSH=/Users/dai_kaibazawa/.oh-my-zsh
+export ZSH=$HOME/.oh-my-zsh
 
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
@@ -97,6 +97,6 @@ alias rs="bundle exec rspec --fail-fast"
 alias bi="bundle install"
 alias be="bundle exec"
 
-export NVM_DIR="/Users/dai_kaibazawa/.nvm"
+export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
 nvm use v5.3.0
