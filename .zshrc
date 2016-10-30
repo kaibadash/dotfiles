@@ -97,6 +97,5 @@ alias rs="bundle exec rspec --fail-fast"
 alias bi="bundle install"
 alias be="bundle exec"
 
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
-nvm use stable
+export PATH=$HOME/.nodebrew/current/bin:$PATH
+
