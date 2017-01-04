@@ -98,4 +98,5 @@ alias bi="bundle install"
 alias be="bundle exec"
 
 export PATH=$HOME/.nodebrew/current/bin:$PATH
+eval "$(pyenv init -)"
 
