@@ -1,5 +1,5 @@
 # Path to your oh-my-zsh installation.
-export ZSH=/Users/dai_kaibazawa/.oh-my-zsh
+export ZSH=$HOME/.oh-my-zsh
 
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
@@ -98,8 +98,5 @@ alias bi="bundle install"
 alias be="bundle exec"
 alias rba="rubocop -a"
 
-export NVM_DIR="/Users/dai_kaibazawa/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
-nvm use v5.3.0
-
-export "EDITOR=vim"
+export PATH=$HOME/.nodebrew/current/bin:$PATH
+eval "$(pyenv init -)"
