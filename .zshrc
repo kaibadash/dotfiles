@@ -96,7 +96,10 @@ alias push="git push"
 alias rs="bundle exec rspec --fail-fast"
 alias bi="bundle install"
 alias be="bundle exec"
+alias rba="rubocop -a"
 
 export NVM_DIR="/Users/dai_kaibazawa/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
 nvm use v5.3.0
+
+export "EDITOR=vim"
