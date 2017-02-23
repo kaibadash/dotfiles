@@ -58,6 +58,8 @@ export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
 source $ZSH/oh-my-zsh.sh
 
+setopt nonomatch
+
 # You may need to manually set your language environment
 # export LANG=en_US.UTF-8
 
@@ -100,3 +102,4 @@ alias rba="rubocop -a"
 
 export PATH=$HOME/.nodebrew/current/bin:$PATH
 eval "$(pyenv init -)"
+
