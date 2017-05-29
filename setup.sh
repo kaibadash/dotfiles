@@ -23,3 +23,5 @@ git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
 # nodebrew
 curl -L git.io/nodebrew | perl - setup
 nodebrew install-binary stable
+
+chsh -s `which zsh`
