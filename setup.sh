@@ -19,6 +19,7 @@ curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
 # rbenv
 git clone https://github.com/rbenv/rbenv.git ~/.rbenv
 git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
+git config --global core.excludesfile ~/dotfiles/.gitignore_global
 # apt-get install -y libssl-dev libreadline-dev zlib1g-dev
 # nodebrew
 curl -L git.io/nodebrew | perl - setup
