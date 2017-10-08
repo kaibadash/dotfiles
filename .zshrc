@@ -103,3 +103,6 @@ alias rba="rubocop -a"
 export PATH=$HOME/.nodebrew/current/bin:$PATH
 eval "$(pyenv init -)"
 setopt nonomatch
+
+export EDITOR=vim
+eval "$(direnv hook zsh)"
