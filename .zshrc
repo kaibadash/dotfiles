@@ -103,3 +103,4 @@ alias rba="rubocop -a"
 export PATH=$HOME/.nodebrew/current/bin:$PATH
 eval "$(pyenv init -)"
 setopt nonomatch
+eval "$(rbenv init -)"
