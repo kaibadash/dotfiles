@@ -99,8 +99,9 @@ alias rs="bundle exec rspec --fail-fast"
 alias bi="bundle install"
 alias be="bundle exec"
 alias rba="rubocop -a"
+alias vg="vg"
 
 export PATH=$HOME/.nodebrew/current/bin:$PATH
-eval "$(pyenv init -)"
+#eval "$(pyenv init -)"
 setopt nonomatch
 eval "$(rbenv init -)"
