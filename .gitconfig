@@ -1,3 +1,19 @@
 [user]
 	name = kaiba
 	email = kaibadash@gmail.com
+[core]
+	excludesfile = /Users/kaiba/dotfiles/.gitignore_global
+[push]
+  default = current
+[difftool "sourcetree"]
+	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+	path = 
+[mergetool "sourcetree"]
+	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+	trustExitCode = true
+[merge]
+	ff = false
+	ff = false
+[pull]
+	ff = only
+	ff = only

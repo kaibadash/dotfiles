@@ -1,0 +1,7 @@
+*.swp
+*.log
+.idea
+.DS_Store
+node_modules/
+.env
+.pry*
