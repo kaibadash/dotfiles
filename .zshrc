@@ -113,6 +113,9 @@ export PATH="/Users/kaiba/.phpenv/bin:$PATH"
 eval "$(phpenv init -)"
 
 setopt nonomatch
+
+export EDITOR=vim
+eval "$(direnv hook zsh)"
 eval "$(rbenv init -)"
 eval $(docker-machine env default)
 export PYENV_ROOT="$HOME/.pyenv"
