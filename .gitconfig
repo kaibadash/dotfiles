@@ -13,7 +13,7 @@
 	trustExitCode = true
 [merge]
 	ff = false
-	ff = false
 [pull]
-	ff = only
-	ff = only
+	ff = false
+[commit]
+	template = /Users/kaiba/.commit_template

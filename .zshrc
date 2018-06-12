@@ -95,13 +95,35 @@ alias gtr="git log --graph --pretty='format:%C(yellow)%h%Creset %s %Cgreen(%an)%
 alias rpush="git push --set-upstream origin"
 alias pull="git pull"
 alias push="git push"
+alias merge="git merge"
 alias rs="bundle exec rspec --fail-fast"
 alias bi="bundle install"
 alias be="bundle exec"
 alias rba="rubocop -a"
 alias vg="vagrant"
+mkcd() {
+  \mkdir $* && cd $_
+}
+alias mkcd="mkcd"
 
 export PATH=$HOME/.nodebrew/current/bin:$PATH
-#eval "$(pyenv init -)"
+#eval "$(pyenv init -)
+
+export PATH="/Users/kaiba/.phpenv/bin:$PATH"
+eval "$(phpenv init -)"
+
 setopt nonomatch
 eval "$(rbenv init -)"
+eval $(docker-machine env default)
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+export PATH="$HOME/.pyenv/shims:$PATH"
+
+# tabtab source for serverless package
+# uninstall by removing these lines or running `tabtab uninstall serverless`
+[[ -f /Users/kaiba/.nodebrew/node/v8.1.1/lib/node_modules/serverless/node_modules/tabtab/.completions/serverless.zsh ]] && . /Users/kaiba/.nodebrew/node/v8.1.1/lib/node_modules/serverless/node_modules/tabtab/.completions/serverless.zsh
+# tabtab source for sls package
+# uninstall by removing these lines or running `tabtab uninstall sls`
+[[ -f /Users/kaiba/.nodebrew/node/v8.1.1/lib/node_modules/serverless/node_modules/tabtab/.completions/sls.zsh ]] && . /Users/kaiba/.nodebrew/node/v8.1.1/lib/node_modules/serverless/node_modules/tabtab/.completions/sls.zsh
+
