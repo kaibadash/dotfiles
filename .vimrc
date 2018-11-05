@@ -51,9 +51,13 @@ if has('persistent_undo')
   set undoreload=10000
 endif
 
-" vimにcoffeeファイルタイプを認識させる
+" coffee
 au BufRead,BufNewFile,BufReadPre *.coffee   set filetype=coffee
 autocmd FileType coffee     setlocal sw=2 sts=2 ts=2 et
+
+" typescipt
+au BufRead,BufNewFile,BufReadPre *.ts set filetype=javascript
+autocmd FileType javascript setlocal sw=2 sts=2 ts=2 et
 
 " _/_/_/_/ Finalization _/_/_/_/
 filetype plugin indent on " ファイルタイプ関連を再度有効化
