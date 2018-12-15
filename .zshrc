@@ -122,6 +122,7 @@ export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 export PATH="$HOME/.pyenv/shims:$PATH"
+[[ -z "$TMUX" && ! -z "$PS1" ]] && tmux
 
 # tabtab source for serverless package
 # uninstall by removing these lines or running `tabtab uninstall serverless`
