@@ -16,5 +16,5 @@
 	ff = false
 [pull]
 	ff = false
-[commit]
-	template = /Users/kaiba/.commit_template
+[credential]
+	helper = osxkeychain

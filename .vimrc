@@ -18,7 +18,7 @@ set showmatch " 対応する括弧のハイライト表示
 set showmode " モード表示
 set title " 編集中のファイル名を表示
 set ruler " ルーラーを表示
-set expandtab " タブ入力を複数の空白入力に置き換え
+set expandtab " tab -> space
 set tabstop=2 " 画面上でタブ文字が占める幅
 set shiftwidth=2 " 自動インデントの幅
 set softtabstop=2 " 連続した空白に対してタブキーやバックスペースキーでカーソルが動く幅
@@ -52,11 +52,15 @@ if has('persistent_undo')
 endif
 
 " coffee
-au BufRead,BufNewFile,BufReadPre *.coffee   set filetype=coffee
+au BufRead,BufNewFile,BufReadPre *.coffee set filetype=coffee
 autocmd FileType coffee     setlocal sw=2 sts=2 ts=2 et
 
 " typescipt
 au BufRead,BufNewFile,BufReadPre *.ts set filetype=javascript
+autocmd FileType javascript setlocal sw=2 sts=2 ts=2 et
+
+" javascript
+au BufRead,BufNewFile,BufReadPre *.js set filetype=javascript
 autocmd FileType javascript setlocal sw=2 sts=2 ts=2 et
 
 " _/_/_/_/ Finalization _/_/_/_/
