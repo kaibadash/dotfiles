@@ -100,7 +100,7 @@ alias merge="git merge"
 alias rs="bundle exec rspec --fail-fast"
 alias bi="bundle install"
 alias be="bundle exec"
-alias rba="rubocop -a"
+alias rba="rubocop -A"
 alias vg="vagrant"
 mkcd() {
   \mkdir $* && cd $_
@@ -132,3 +132,6 @@ export PATH="$HOME/.pyenv/shims:$PATH"
 # uninstall by removing these lines or running `tabtab uninstall sls`
 [[ -f /Users/kaiba/.nodebrew/node/v8.1.1/lib/node_modules/serverless/node_modules/tabtab/.completions/sls.zsh ]] && . /Users/kaiba/.nodebrew/node/v8.1.1/lib/node_modules/serverless/node_modules/tabtab/.completions/sls.zsh
 
+export PATH=$HOME/.nodebrew/current/bin:$PATH
+export PATH="/usr/local/opt/libpq/bin:$PATH"
+source "/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.zsh.inc"
