@@ -22,6 +22,6 @@ git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
 curl -L git.io/nodebrew | perl - setup
 nodebrew install-binary stable
 chsh -s `which zsh`
-brew cask update
-brew cask install visual-studio-code
+brew update
+brew install --cask visual-studio-code
 brew install rbenv mysql yarn tmux
