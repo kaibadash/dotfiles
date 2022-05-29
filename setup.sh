@@ -23,5 +23,4 @@ curl -L git.io/nodebrew | perl - setup
 nodebrew install-binary stable
 chsh -s `which zsh`
 brew update
-brew install --cask visual-studio-code
-brew install rbenv mysql yarn tmux
+brew install --cask chrome iterm2 dropbox keepassx visual-studio-code google-japanese-ime intellij-idea rubymine phpstorm rbenv mysql yarn tmux
