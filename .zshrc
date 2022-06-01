@@ -1,4 +1,7 @@
-# Path to your oh-my-zsh installation.
+if [[ ! -n $TMUX ]]; then
+  tmux new-session
+fi
+
 export ZSH=$HOME/.oh-my-zsh
 
 # Set name of the theme to load.
@@ -123,7 +126,6 @@ export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 export PATH="$HOME/.pyenv/shims:$PATH"
-[[ -z "$TMUX" && ! -z "$PS1" ]] && tmux
 
 # tabtab source for serverless package
 # uninstall by removing these lines or running `tabtab uninstall serverless`
@@ -135,3 +137,4 @@ export PATH="$HOME/.pyenv/shims:$PATH"
 export PATH=$HOME/.nodebrew/current/bin:$PATH
 export PATH="/usr/local/opt/libpq/bin:$PATH"
 source "/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.zsh.inc"
+eval "$(/opt/homebrew/bin/brew shellenv)"

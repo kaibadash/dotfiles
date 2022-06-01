@@ -9,3 +9,4 @@ node_modules/
 id_rsa*
 credentials
 .vscode
+kaiba*sh
