@@ -109,6 +109,13 @@ mkcd() {
   \mkdir $* && cd $_
 }
 alias mkcd="mkcd"
+replace() {
+  local dirpath="$1"
+  local from="$2"
+  local to="$3"
+  find "$dirpath" -type f -exec gsed -i "s/$from/$to/g" {} +
+}
+alias replace="replace"
 
 export PATH=$HOME/.nodebrew/current/bin:$PATH
 #eval "$(pyenv init -)
@@ -136,5 +143,15 @@ export PATH="$HOME/.pyenv/shims:$PATH"
 
 export PATH=$HOME/.nodebrew/current/bin:$PATH
 export PATH="/usr/local/opt/libpq/bin:$PATH"
-source "/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.zsh.inc"
+source /opt/homebrew/share/google-cloud-sdk/completion.zsh.inc
+source /opt/homebrew/share/google-cloud-sdk/path.zsh.inc
 eval "$(/opt/homebrew/bin/brew shellenv)"
+
+. /opt/homebrew/opt/asdf/libexec/asdf.sh
+export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+export PATH="/opt/homebrew/opt/libxml2/bin:$PATH"
+
+autoload -U +X bashcompinit && bashcompinit
+complete -o nospace -C /opt/homebrew/bin/terraform terraform
+
+
