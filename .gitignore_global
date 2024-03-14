@@ -10,3 +10,6 @@ id_rsa*
 credentials
 .vscode
 kaiba*sh
+kaiba*secret
+kaiba*rb
+kaiba*rake
