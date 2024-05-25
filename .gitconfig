@@ -16,6 +16,6 @@
 [merge]
 	ff = false
 [pull]
-	ff = false
+	ff = true
 [credential]
 	helper = osxkeychain
