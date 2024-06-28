@@ -110,10 +110,23 @@ mkcd() {
 }
 alias mkcd="mkcd"
 replace() {
-  local dirpath="$1"
-  local from="$2"
-  local to="$3"
-  find "$dirpath" -type f -exec gsed -i "s/$from/$to/g" {} +
+  if [ "$#" -lt 3 ]; then
+    echo "Usage: replace from to dir1 [dir2 ... dirN]"
+    return 1
+  fi
+
+  local from="$1"
+  local to="$2"
+  shift 2
+  local dirs=("$@")
+
+  for dir in "${dirs[@]}"; do
+    if [ -d "$dir" ]; then
+      find "$dir" -type f -exec gsed -i'' -e "s/$from/$to/g" {} \;
+    else
+      echo "Directory $dir does not exist"
+    fi
+  done
 }
 alias replace="replace"
 
@@ -153,5 +166,4 @@ export PATH="/opt/homebrew/opt/libxml2/bin:$PATH"
 
 autoload -U +X bashcompinit && bashcompinit
 complete -o nospace -C /opt/homebrew/bin/terraform terraform
-
 
