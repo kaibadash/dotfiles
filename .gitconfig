@@ -14,8 +14,11 @@
 	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
 	trustExitCode = true
 [merge]
-	ff = false
+	ff = true
 [pull]
 	ff = true
 [credential]
-	helper = osxkeychain
+  helper = osxkeychain
+[init]
+  defaultBranch = main
+
