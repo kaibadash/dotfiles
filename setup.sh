@@ -4,8 +4,13 @@ DOT_FILES=( .zsh .zshrc .zshrc.custom .zshrc.alias .zshrc.linux .zshrc.osx .ctag
 
 for file in ${DOT_FILES[@]}
 do
+    rm -f $HOME/$file
     ln -s $HOME/dotfiles/$file $HOME/$file
 done
+exit
+
+# install brew
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # install oh-my-zsh
 [ ! -d ~/.oh-my-zsh ] && git clone git://github.com/robbyrussell/oh-my-zsh.git ~/.oh-my-zsh
@@ -21,6 +26,5 @@ git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
 # apt-get install -y libssl-dev libreadline-dev zlib1g-dev
 curl -L git.io/nodebrew | perl - setup
 nodebrew install-binary stable
-chsh -s `which zsh`
 brew update
-brew install --cask chrome iterm2 dropbox keepassx visual-studio-code google-japanese-ime intellij-idea rubymine phpstorm rbenv mysql yarn tmux
+brew install --cask iterm2 dropbox keepassx visual-studio-code google-japanese-ime intellij-idea rubymine phpstorm mysql yarn tmux gsed
