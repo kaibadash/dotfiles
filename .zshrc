@@ -93,3 +93,8 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 
+# forkup
+if [[ ":$PATH:" != *":$HOME/dotfiles/bin:"* ]]; then
+  export PATH="$HOME/dotfiles/bin:$PATH"
+fi
+

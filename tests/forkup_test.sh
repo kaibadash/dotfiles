@@ -593,4 +593,29 @@ test_origin_fetch_failure_keeps_branch
 test_creates_missing_local_default_branch
 test_uses_parent_default_branch_name
 test_tracks_upstream_when_origin_lacks_branch
+
+test_zshrc_path() {
+  local zshrc="$ROOT/.zshrc" out
+  if ! grep -F 'export PATH="$HOME/dotfiles/bin:$PATH"' "$zshrc" >/dev/null; then
+    fail "dotfiles bin is not prepended in .zshrc"
+  fi
+  if grep -F 'bin/forkup' "$ROOT/setup.sh" >/dev/null; then
+    fail "setup.sh mentions forkup"
+  fi
+  out="$(zsh -f -c '
+    PATH=/usr/bin:/bin
+    HOME=/tmp/forkup-home
+    if [[ ":$PATH:" != *":$HOME/dotfiles/bin:"* ]]; then
+      export PATH="$HOME/dotfiles/bin:$PATH"
+    fi
+    if [[ ":$PATH:" != *":$HOME/dotfiles/bin:"* ]]; then
+      export PATH="$HOME/dotfiles/bin:$PATH"
+    fi
+    print -r -- "$PATH"
+  ')"
+  [[ "$out" == "/tmp/forkup-home/dotfiles/bin:/usr/bin:/bin" ]] || fail "path prepend is not idempotent: $out"
+  pass "zshrc path"
+}
+
+test_zshrc_path
 echo "all passed"
