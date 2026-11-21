@@ -1,0 +1,41 @@
+#!/bin/bash
+set -euo pipefail
+
+die() {
+  echo "forkup: $*" >&2
+  exit 1
+}
+
+require_git_repo() {
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "not a git repository"
+}
+
+require_idle_worktree() {
+  local rebase_merge rebase_apply merge_head cherry_head
+  rebase_merge="$(git rev-parse --git-path rebase-merge)"
+  rebase_apply="$(git rev-parse --git-path rebase-apply)"
+  merge_head="$(git rev-parse --git-path MERGE_HEAD)"
+  cherry_head="$(git rev-parse --git-path CHERRY_PICK_HEAD)"
+  if [[ -d "$rebase_merge" || -d "$rebase_apply" ]]; then
+    die "rebase in progress"
+  fi
+  if [[ -f "$merge_head" ]]; then
+    die "merge in progress"
+  fi
+  if [[ -f "$cherry_head" ]]; then
+    die "cherry-pick in progress"
+  fi
+  if [[ -n "$(git status --porcelain)" ]]; then
+    die "working tree is dirty"
+  fi
+}
+
+main() {
+  if [[ "$#" -ne 0 ]]; then
+    die "no arguments"
+  fi
+  require_git_repo
+  require_idle_worktree
+}
+
+main "$@"
