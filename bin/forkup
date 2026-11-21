@@ -57,14 +57,53 @@ ensure_upstream() {
   printf '%s\n' "$nwo"
 }
 
+default_branch_of() {
+  local nwo="$1"
+  local branch
+  branch="$(gh repo view "$nwo" --json defaultBranchRef --jq .defaultBranchRef.name)" || die "failed to resolve default branch"
+  if [[ -z "$branch" || "$branch" == "null" ]]; then
+    die "failed to resolve default branch"
+  fi
+  printf '%s\n' "$branch"
+}
+
+switch_to_branch() {
+  local branch="$1"
+  if git show-ref --verify --quiet "refs/heads/$branch"; then
+    git switch "$branch"
+  elif git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+    git switch -c "$branch" --track "origin/$branch"
+  else
+    git switch -c "$branch" --track "upstream/$branch"
+  fi
+}
+
+push_branch() {
+  local branch="$1"
+  if git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+    git push --force-with-lease origin "$branch" || die "origin has new commits; force-with-lease refused"
+  else
+    git push -u origin "$branch" || die "failed to push origin"
+  fi
+}
+
 main() {
-  local nwo
+  local nwo branch
   if [[ "$#" -ne 0 ]]; then
     die "no arguments"
   fi
   require_git_repo
   require_idle_worktree
   nwo="$(ensure_upstream)" || exit 1
+  git fetch upstream --prune || die "failed to fetch upstream"
+  git fetch origin || die "failed to fetch origin"
+  branch="$(default_branch_of "$nwo")" || exit 1
+  switch_to_branch "$branch"
+  if ! git rebase "upstream/$branch"; then
+    echo "forkup: rebase conflict; run git rebase --continue or git rebase --abort" >&2
+    exit 1
+  fi
+  push_branch "$branch"
 }
 
 main "$@"

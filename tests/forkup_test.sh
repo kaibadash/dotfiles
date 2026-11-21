@@ -330,4 +330,267 @@ test_adds_upstream
 test_keeps_existing_upstream
 test_requires_gh_when_upstream_exists
 test_existing_upstream_not_a_fork
+
+test_fetch_failure_keeps_upstream() {
+  local base bin head
+  base="$(newtmp)"
+  bin="$base/bin"
+  make_pair "$base"
+  install_fake_gh "$bin" "$base/missing.git" main true local/upstream
+  head="$(git -C "$base/work" rev-parse HEAD)"
+  with_git_path "$bin" "$base/work" expect_fail "failed to fetch upstream" "$FORKUP"
+  [[ "$(git -C "$base/work" remote get-url upstream)" == "$base/missing.git" ]] || fail "upstream remote dropped after fetch failure"
+  [[ "$(git -C "$base/work" rev-parse HEAD)" == "$head" ]] || fail "HEAD moved after fetch failure"
+  [[ "$(git -C "$base/work" branch --show-current)" == "main" ]] || fail "branch changed after fetch failure"
+  pass "fetch failure keeps upstream"
+}
+
+test_fast_forward() {
+  local base bin upstream_head
+  base="$(newtmp)"
+  bin="$base/bin"
+  make_pair "$base"
+  echo two >> "$base/seed/file"
+  git -C "$base/seed" commit -am two >/dev/null
+  git -C "$base/seed" push upstream main >/dev/null
+  install_fake_gh "$bin" "$base/upstream.git" main true local/upstream
+  with_git_path "$bin" "$base/work" "$FORKUP"
+  upstream_head="$(git -C "$base/upstream.git" rev-parse main)"
+  [[ "$(git -C "$base/work" rev-parse HEAD)" == "$upstream_head" ]] || fail "work was not fast-forwarded"
+  [[ "$(git -C "$base/origin.git" rev-parse main)" == "$upstream_head" ]] || fail "origin was not fast-forwarded"
+  [[ "$(git -C "$base/work" branch --show-current)" == "main" ]] || fail "not on main"
+  pass "fast-forward"
+}
+
+test_rebase_unique_commits() {
+  local base bin upstream_head
+  base="$(newtmp)"
+  bin="$base/bin"
+  make_pair "$base"
+  echo up > "$base/seed/up"
+  git -C "$base/seed" add up
+  git -C "$base/seed" commit -m upstream-change >/dev/null
+  git -C "$base/seed" push upstream main >/dev/null
+  echo mine > "$base/work/mine"
+  git -C "$base/work" add mine
+  git -C "$base/work" commit -m fork-change >/dev/null
+  install_fake_gh "$bin" "$base/upstream.git" main true local/upstream
+  with_git_path "$bin" "$base/work" "$FORKUP"
+  upstream_head="$(git -C "$base/upstream.git" rev-parse main)"
+  [[ "$(git -C "$base/work" log -1 --format=%s)" == "fork-change" ]] || fail "fork commit not on top"
+  [[ "$(git -C "$base/work" log -1 --format=%P)" == "$upstream_head" ]] || fail "fork commit was not rebased onto upstream"
+  [[ -f "$base/work/up" && -f "$base/work/mine" ]] || fail "rebase dropped file contents"
+  [[ "$(git -C "$base/origin.git" rev-parse main)" == "$(git -C "$base/work" rev-parse HEAD)" ]] || fail "origin does not match rebased work"
+  [[ "$(git -C "$base/origin.git" log -1 --format=%s)" == "fork-change" ]] || fail "origin missing rebased commit"
+  pass "rebase unique commits"
+}
+
+test_switches_to_default_branch() {
+  local base bin feature upstream_head
+  base="$(newtmp)"
+  bin="$base/bin"
+  make_pair "$base"
+  echo two >> "$base/seed/file"
+  git -C "$base/seed" commit -am two >/dev/null
+  git -C "$base/seed" push upstream main >/dev/null
+  git -C "$base/work" checkout -b feature >/dev/null
+  echo f > "$base/work/feature-file"
+  git -C "$base/work" add feature-file
+  git -C "$base/work" commit -m feature-change >/dev/null
+  feature="$(git -C "$base/work" rev-parse HEAD)"
+  install_fake_gh "$bin" "$base/upstream.git" main true local/upstream
+  with_git_path "$bin" "$base/work" "$FORKUP"
+  upstream_head="$(git -C "$base/upstream.git" rev-parse main)"
+  [[ "$(git -C "$base/work" branch --show-current)" == "main" ]] || fail "did not stay on default branch"
+  [[ "$(git -C "$base/work" rev-parse feature)" == "$feature" ]] || fail "feature branch moved"
+  [[ "$(git -C "$base/work" rev-parse HEAD)" == "$upstream_head" ]] || fail "default branch was not updated"
+  [[ ! -f "$base/work/feature-file" ]] || fail "feature file checked out on default branch"
+  pass "switches to default branch"
+}
+
+test_rebase_conflict_does_not_push() {
+  local base bin origin_head git_dir
+  base="$(newtmp)"
+  bin="$base/bin"
+  make_pair "$base"
+  echo upstream > "$base/seed/file"
+  git -C "$base/seed" commit -am upstream-change >/dev/null
+  git -C "$base/seed" push upstream main >/dev/null
+  echo fork > "$base/work/file"
+  git -C "$base/work" commit -am fork-change >/dev/null
+  origin_head="$(git -C "$base/origin.git" rev-parse main)"
+  install_fake_gh "$bin" "$base/upstream.git" main true local/upstream
+  with_git_path "$bin" "$base/work" expect_fail "rebase conflict" "$FORKUP"
+  status="$(git -C "$base/work" status)"
+  [[ "$status" == *"rebasing branch 'main'"* ]] || fail "conflict did not happen on default branch"
+  git_dir="$(git -C "$base/work" rev-parse --absolute-git-dir)"
+  if [[ ! -d "$git_dir/rebase-merge" && ! -d "$git_dir/rebase-apply" ]]; then
+    fail "rebase was not left in progress"
+  fi
+  [[ "$(git -C "$base/origin.git" rev-parse main)" == "$origin_head" ]] || fail "origin changed despite rebase conflict"
+  pass "rebase conflict does not push"
+}
+
+test_force_with_lease_refusal() {
+  local base bin wrap side upstream_head
+  base="$(newtmp)"
+  bin="$base/bin"
+  wrap="$base/wrap"
+  make_pair "$base"
+  echo two >> "$base/seed/file"
+  git -C "$base/seed" commit -am two >/dev/null
+  git -C "$base/seed" push upstream main >/dev/null
+  git clone "$base/origin.git" "$base/side" >/dev/null 2>&1
+  mkdir -p "$wrap"
+  cat > "$wrap/git" <<EOF
+#!/bin/bash
+set -euo pipefail
+if [[ "\${1:-}" == "push" && "\$*" == *"--force-with-lease"* && ! -f "$base/leased" ]]; then
+  touch "$base/leased"
+  "$GIT_BIN/git" -C "$base/side" commit --allow-empty -m "someone else" >/dev/null
+  "$GIT_BIN/git" -C "$base/side" push origin main >/dev/null
+fi
+exec "$GIT_BIN/git" "\$@"
+EOF
+  chmod +x "$wrap/git"
+  install_fake_gh "$bin" "$base/upstream.git" main true local/upstream
+  (
+    cd "$base/work"
+    export PATH="$wrap:$bin:$GIT_BIN:/usr/bin:/bin"
+    expect_fail "force-with-lease refused" "$FORKUP"
+  )
+  upstream_head="$(git -C "$base/upstream.git" rev-parse main)"
+  [[ "$(git -C "$base/work" rev-parse HEAD)" == "$upstream_head" ]] || fail "local branch was not rebased before the refused push"
+  [[ "$(git -C "$base/origin.git" log -1 --format=%s)" == "someone else" ]] || fail "origin is not the competing commit"
+  [[ "$(git -C "$base/origin.git" rev-parse main)" != "$(git -C "$base/work" rev-parse HEAD)" ]] || fail "refused push still updated origin to local HEAD"
+  pass "force-with-lease refusal"
+}
+
+test_pushes_missing_origin_branch() {
+  local base bin
+  base="$(newtmp)"
+  bin="$base/bin"
+  git init --bare -b main "$base/upstream.git" >/dev/null
+  git init --bare -b main "$base/origin.git" >/dev/null
+  git init -b main "$base/seed" >/dev/null
+  echo base > "$base/seed/file"
+  git -C "$base/seed" add file
+  git -C "$base/seed" commit -m base >/dev/null
+  git -C "$base/seed" remote add origin "$base/upstream.git"
+  git -C "$base/seed" push origin main >/dev/null
+  git clone "$base/upstream.git" "$base/work" >/dev/null 2>&1
+  git -C "$base/work" remote rename origin upstream
+  git -C "$base/work" remote add origin "$base/origin.git"
+  install_fake_gh "$bin" "$base/wrong.git" main true local/upstream
+  with_git_path "$bin" "$base/work" "$FORKUP"
+  [[ "$(git -C "$base/work" remote get-url upstream)" == "$base/upstream.git" ]] || fail "existing upstream replaced"
+  [[ "$(git -C "$base/origin.git" rev-parse main)" == "$(git -C "$base/work" rev-parse HEAD)" ]] || fail "missing origin branch was not pushed"
+  pass "pushes missing origin branch"
+}
+
+test_origin_fetch_failure_keeps_branch() {
+  local base bin head
+  base="$(newtmp)"
+  bin="$base/bin"
+  make_pair "$base"
+  git -C "$base/work" remote set-url origin "$base/missing-origin.git"
+  install_fake_gh "$bin" "$base/upstream.git" main true local/upstream
+  head="$(git -C "$base/work" rev-parse HEAD)"
+  with_git_path "$bin" "$base/work" expect_fail "failed to fetch origin" "$FORKUP"
+  [[ "$(git -C "$base/work" remote get-url upstream)" == "$base/upstream.git" ]] || fail "upstream missing after origin fetch failure"
+  [[ "$(git -C "$base/work" rev-parse HEAD)" == "$head" ]] || fail "HEAD moved after origin fetch failure"
+  [[ "$(git -C "$base/work" branch --show-current)" == "main" ]] || fail "branch changed after origin fetch failure"
+  pass "origin fetch failure"
+}
+
+test_creates_missing_local_default_branch() {
+  local base bin feature upstream_head
+  base="$(newtmp)"
+  bin="$base/bin"
+  make_pair "$base"
+  echo two >> "$base/seed/file"
+  git -C "$base/seed" commit -am two >/dev/null
+  git -C "$base/seed" push upstream main >/dev/null
+  git -C "$base/work" checkout -b feature >/dev/null
+  echo f > "$base/work/feature-file"
+  git -C "$base/work" add feature-file
+  git -C "$base/work" commit -m feature-change >/dev/null
+  feature="$(git -C "$base/work" rev-parse HEAD)"
+  git -C "$base/work" branch -D main >/dev/null
+  install_fake_gh "$bin" "$base/upstream.git" main true local/upstream
+  with_git_path "$bin" "$base/work" "$FORKUP"
+  upstream_head="$(git -C "$base/upstream.git" rev-parse main)"
+  [[ "$(git -C "$base/work" branch --show-current)" == "main" ]] || fail "missing main was not created"
+  [[ "$(git -C "$base/work" rev-parse HEAD)" == "$upstream_head" ]] || fail "created main was not rebased onto upstream"
+  [[ "$(git -C "$base/work" rev-parse feature)" == "$feature" ]] || fail "feature moved while creating main"
+  pass "creates missing local default branch"
+}
+
+test_uses_parent_default_branch_name() {
+  local base bin upstream_head
+  base="$(newtmp)"
+  bin="$base/bin"
+  git init --bare -b trunk "$base/upstream.git" >/dev/null
+  git init --bare -b trunk "$base/origin.git" >/dev/null
+  git init -b trunk "$base/seed" >/dev/null
+  echo base > "$base/seed/file"
+  git -C "$base/seed" add file
+  git -C "$base/seed" commit -m base >/dev/null
+  git -C "$base/seed" remote add upstream "$base/upstream.git"
+  git -C "$base/seed" remote add origin "$base/origin.git"
+  git -C "$base/seed" push upstream trunk >/dev/null
+  git -C "$base/seed" push origin trunk >/dev/null
+  git clone "$base/origin.git" "$base/work" >/dev/null 2>&1
+  echo two >> "$base/seed/file"
+  git -C "$base/seed" commit -am two >/dev/null
+  git -C "$base/seed" push upstream trunk >/dev/null
+  install_fake_gh "$bin" "$base/upstream.git" trunk true local/upstream
+  with_git_path "$bin" "$base/work" "$FORKUP"
+  upstream_head="$(git -C "$base/upstream.git" rev-parse trunk)"
+  [[ "$(git -C "$base/work" branch --show-current)" == "trunk" ]] || fail "did not switch to parent default branch"
+  [[ "$(git -C "$base/work" rev-parse HEAD)" == "$upstream_head" ]] || fail "trunk was not fast-forwarded"
+  [[ "$(git -C "$base/origin.git" rev-parse trunk)" == "$upstream_head" ]] || fail "origin trunk was not updated"
+  pass "uses parent default branch name"
+}
+
+test_tracks_upstream_when_origin_lacks_branch() {
+  local base bin upstream_head
+  base="$(newtmp)"
+  bin="$base/bin"
+  git init --bare -b main "$base/upstream.git" >/dev/null
+  git init --bare -b main "$base/origin.git" >/dev/null
+  git init -b main "$base/seed" >/dev/null
+  echo base > "$base/seed/file"
+  git -C "$base/seed" add file
+  git -C "$base/seed" commit -m base >/dev/null
+  git -C "$base/seed" remote add origin "$base/upstream.git"
+  git -C "$base/seed" push origin main >/dev/null
+  git clone "$base/upstream.git" "$base/work" >/dev/null 2>&1
+  echo two >> "$base/seed/file"
+  git -C "$base/seed" commit -am two >/dev/null
+  git -C "$base/seed" push origin main >/dev/null
+  git -C "$base/work" remote rename origin upstream
+  git -C "$base/work" remote add origin "$base/origin.git"
+  git -C "$base/work" checkout -b side >/dev/null
+  git -C "$base/work" branch -D main >/dev/null
+  install_fake_gh "$bin" "$base/wrong.git" main true local/upstream
+  with_git_path "$bin" "$base/work" "$FORKUP"
+  upstream_head="$(git -C "$base/upstream.git" rev-parse main)"
+  [[ "$(git -C "$base/work" branch --show-current)" == "main" ]] || fail "did not create main from upstream"
+  [[ "$(git -C "$base/work" rev-parse HEAD)" == "$upstream_head" ]] || fail "main does not match upstream"
+  [[ "$(git -C "$base/origin.git" rev-parse main)" == "$upstream_head" ]] || fail "origin main was not pushed"
+  pass "tracks upstream when origin lacks the branch"
+}
+
+test_fetch_failure_keeps_upstream
+test_fast_forward
+test_rebase_unique_commits
+test_switches_to_default_branch
+test_rebase_conflict_does_not_push
+test_force_with_lease_refusal
+test_pushes_missing_origin_branch
+test_origin_fetch_failure_keeps_branch
+test_creates_missing_local_default_branch
+test_uses_parent_default_branch_name
+test_tracks_upstream_when_origin_lacks_branch
 echo "all passed"
