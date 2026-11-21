@@ -163,4 +163,171 @@ test_rejects_untracked
 test_rejects_rebase
 test_rejects_merge
 test_rejects_cherry_pick
+
+install_fake_gh() {
+  local bin="$1"
+  local upstream_url="$2"
+  local branch="$3"
+  local is_fork="$4"
+  local nwo="$5"
+  mkdir -p "$bin"
+  cat > "$bin/gh" <<EOF
+#!/bin/bash
+set -euo pipefail
+joined="\$*"
+if [[ "\$joined" == *"isFork,parent"* ]]; then
+  if [[ "$is_fork" == "true" ]]; then
+    printf 'true\t%s\n' "$nwo"
+  else
+    printf 'false\t/\n'
+  fi
+  exit 0
+fi
+if [[ "\$joined" == *"--json url"* ]]; then
+  printf '%s\n' "$upstream_url"
+  exit 0
+fi
+if [[ "\$joined" == *"defaultBranchRef"* ]]; then
+  printf '%s\n' "$branch"
+  exit 0
+fi
+echo "unexpected gh invocation: \$joined" >&2
+exit 1
+EOF
+  chmod +x "$bin/gh"
+}
+
+with_git_path() {
+  local bin="$1"
+  shift
+  (
+    cd "$1"
+    shift
+    export PATH="$bin:$GIT_BIN:/usr/bin:/bin"
+    "$@"
+  )
+}
+
+make_pair() {
+  local base="$1"
+  git init --bare -b main "$base/upstream.git" >/dev/null
+  git init --bare -b main "$base/origin.git" >/dev/null
+  git init -b main "$base/seed" >/dev/null
+  echo base > "$base/seed/file"
+  git -C "$base/seed" add file
+  git -C "$base/seed" commit -m base >/dev/null
+  git -C "$base/seed" remote add upstream "$base/upstream.git"
+  git -C "$base/seed" remote add origin "$base/origin.git"
+  git -C "$base/seed" push upstream main >/dev/null
+  git -C "$base/seed" push origin main >/dev/null
+  git clone "$base/origin.git" "$base/work" >/dev/null 2>&1
+}
+
+test_rejects_non_fork() {
+  local base bin
+  base="$(newtmp)"
+  bin="$base/bin"
+  make_pair "$base"
+  install_fake_gh "$bin" "/wrong" main false local/upstream
+  with_git_path "$bin" "$base/work" expect_fail "not a fork" "$FORKUP"
+  if git -C "$base/work" remote get-url upstream >/dev/null 2>&1; then
+    fail "upstream remote was added for a non-fork"
+  fi
+  pass "not a fork"
+}
+
+test_rejects_missing_gh() {
+  local base bin
+  base="$(newtmp)"
+  bin="$base/bin"
+  mkdir -p "$bin"
+  ln -s "$(command -v git)" "$bin/git"
+  make_pair "$base"
+  (
+    cd "$base/work"
+    export PATH="$bin:/usr/bin:/bin"
+    expect_fail "gh is required" "$FORKUP"
+  )
+  pass "gh is required"
+}
+
+test_rejects_gh_failure() {
+  local base bin
+  base="$(newtmp)"
+  bin="$base/bin"
+  mkdir -p "$bin"
+  printf '%s\n' '#!/bin/bash' 'exit 1' > "$bin/gh"
+  chmod +x "$bin/gh"
+  make_pair "$base"
+  with_git_path "$bin" "$base/work" expect_fail "gh repo view failed" "$FORKUP"
+  if git -C "$base/work" remote get-url upstream >/dev/null 2>&1; then
+    fail "upstream remote was added after gh failure"
+  fi
+  pass "gh failure"
+}
+
+test_adds_upstream() {
+  local base bin
+  base="$(newtmp)"
+  bin="$base/bin"
+  make_pair "$base"
+  install_fake_gh "$bin" "$base/upstream.git" main true local/upstream
+  with_git_path "$bin" "$base/work" "$FORKUP"
+  [[ "$(git -C "$base/work" remote get-url upstream)" == "$base/upstream.git" ]] || fail "upstream url mismatch"
+  pass "adds upstream"
+}
+
+test_keeps_existing_upstream() {
+  local base bin
+  base="$(newtmp)"
+  bin="$base/bin"
+  make_pair "$base"
+  git -C "$base/work" remote add upstream "$base/upstream.git"
+  install_fake_gh "$bin" "$base/wrong.git" main true local/upstream
+  with_git_path "$bin" "$base/work" "$FORKUP"
+  [[ "$(git -C "$base/work" remote get-url upstream)" == "$base/upstream.git" ]] || fail "upstream url was rewritten"
+  pass "keeps existing upstream"
+}
+
+test_requires_gh_when_upstream_exists() {
+  local base bin url
+  base="$(newtmp)"
+  bin="$base/bin"
+  mkdir -p "$bin"
+  ln -s "$(command -v git)" "$bin/git"
+  make_pair "$base"
+  git -C "$base/work" remote add upstream "$base/upstream.git"
+  url="$(git -C "$base/work" remote get-url upstream)"
+  (
+    cd "$base/work"
+    export PATH="$bin:/usr/bin:/bin"
+    expect_fail "gh is required" "$FORKUP"
+  )
+  [[ "$(git -C "$base/work" remote get-url upstream)" == "$url" ]] || fail "upstream url changed without gh"
+  [[ "$(git -C "$base/work" branch --show-current)" == "main" ]] || fail "branch changed without gh"
+  pass "gh required when upstream exists"
+}
+
+test_existing_upstream_not_a_fork() {
+  local base bin head
+  base="$(newtmp)"
+  bin="$base/bin"
+  make_pair "$base"
+  git -C "$base/work" remote add upstream "$base/upstream.git"
+  install_fake_gh "$bin" "/wrong" main false local/upstream
+  head="$(git -C "$base/work" rev-parse HEAD)"
+  with_git_path "$bin" "$base/work" expect_fail "not a fork" "$FORKUP"
+  [[ "$(git -C "$base/work" remote get-url upstream)" == "$base/upstream.git" ]] || fail "upstream url changed"
+  [[ "$(git -C "$base/work" rev-parse HEAD)" == "$head" ]] || fail "HEAD moved"
+  [[ "$(git -C "$base/work" branch --show-current)" == "main" ]] || fail "branch changed"
+  pass "existing upstream still requires a fork"
+}
+
+test_rejects_non_fork
+test_rejects_missing_gh
+test_rejects_gh_failure
+test_adds_upstream
+test_keeps_existing_upstream
+test_requires_gh_when_upstream_exists
+test_existing_upstream_not_a_fork
 echo "all passed"

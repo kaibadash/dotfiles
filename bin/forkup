@@ -30,12 +30,41 @@ require_idle_worktree() {
   fi
 }
 
+resolve_parent_nwo() {
+  local info is_fork nwo
+  command -v gh >/dev/null 2>&1 || die "gh is required"
+  info="$(gh repo view --json isFork,parent --jq '[.isFork, (.parent.owner.login + "/" + .parent.name)] | @tsv')" || die "gh repo view failed"
+  is_fork="${info%%$'\t'*}"
+  nwo="${info#*$'\t'}"
+  if [[ "$is_fork" != "true" || -z "$nwo" || "$nwo" == "/" ]]; then
+    die "not a fork"
+  fi
+  printf '%s\n' "$nwo"
+}
+
+ensure_upstream() {
+  local nwo url
+  nwo="$(resolve_parent_nwo)" || exit 1
+  if git remote get-url upstream >/dev/null 2>&1; then
+    printf '%s\n' "$nwo"
+    return 0
+  fi
+  url="$(gh repo view "$nwo" --json url --jq .url)" || die "gh repo view failed"
+  if [[ -z "$url" || "$url" == "null" ]]; then
+    die "gh repo view failed"
+  fi
+  git remote add upstream "$url"
+  printf '%s\n' "$nwo"
+}
+
 main() {
+  local nwo
   if [[ "$#" -ne 0 ]]; then
     die "no arguments"
   fi
   require_git_repo
   require_idle_worktree
+  nwo="$(ensure_upstream)" || exit 1
 }
 
 main "$@"
