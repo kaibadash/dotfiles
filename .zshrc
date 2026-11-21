@@ -1,12 +1,10 @@
 [[ -f ~/.env ]] && source ~/.env
 export ZSH=$HOME/.oh-my-zsh
-
 ZSH_THEME="robbyrussell"
 export ZSH_DISABLE_COMPFIX=true
-plugins=(git)
-
+plugins=(git dotenv)
 # User configuration
-export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/admin/program/cc65/bin"
 
 source $ZSH/oh-my-zsh.sh
 setopt nonomatch
@@ -26,8 +24,10 @@ alias merge="git merge"
 alias rs="bundle exec rspec --fail-fast"
 alias bi="bundle install"
 alias be="bundle exec"
-alias rba="rubocop -A"
+alias rba="bundle exec rubocop -A"
+alias rbg="bundle exec rubocop --auto-gen-config --exclude-limit 9999"
 alias vg="vagrant"
+alias docker-compose="docker compose"
 mkcd() {
   \mkdir $* && cd $_
 }
@@ -58,12 +58,10 @@ export PATH=$HOME/.nodebrew/current/bin:$PATH
 setopt nonomatch
 
 export EDITOR=vim
-eval "$(direnv hook zsh)"
 eval "$(rbenv init -)"
-eval $(docker-machine env default)
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
+#eval "$(pyenv init -)"
 export PATH="$HOME/.pyenv/shims:$PATH"
 export PATH=$HOME/.nodebrew/current/bin:$PATH
 export PATH="/usr/local/opt/libpq/bin:$PATH"
@@ -93,3 +91,16 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 
+
+export PATH=/Users/admin/.ticloud/bin:$PATH
+export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/admin/.cache/lm-studio/bin"
+# End of LM Studio CLI section
+
+eval "$(/Users/admin/.local/bin/mise activate zsh)"
+
+# opencode
+export PATH=/Users/admin/.opencode/bin:$PATH
